@@ -5,17 +5,17 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.List;
+
 @Entity
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class Patient {
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long patientId;
+public class Patient extends BaseEntity {
+
     private String firstName;
     private String fatherName;
-    private String LastName;
+    private String lastName;
     private String address1;
     private String address2;
     private String landMark;
@@ -24,10 +24,16 @@ public class Patient {
     private String zip;
     private String email;
     private String password;
+    private String mobile;
+    private String alternateNumber;
     private String profilePhoto;
+    private String role;
 
-
-
-
-
+    @ManyToMany
+    @JoinTable(
+            name = "patient_doctor",
+            joinColumns = @JoinColumn(name = "patient_id"),
+            inverseJoinColumns = @JoinColumn(name = "doctor_id")
+    )
+    private List<Doctor> doctors;
 }
