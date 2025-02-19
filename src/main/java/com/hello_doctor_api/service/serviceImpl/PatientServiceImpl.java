@@ -2,10 +2,12 @@ package com.hello_doctor_api.service.serviceImpl;
 
 import com.cloudinary.Cloudinary;
 import com.cloudinary.utils.ObjectUtils;
+import com.hello_doctor_api.config.OtpConfig;
 import com.hello_doctor_api.constants.PatientEnum;
 import com.hello_doctor_api.constants.Role;
 import com.hello_doctor_api.dto.request.CreatePatientRequest;
 import com.hello_doctor_api.dto.request.LoginRequest;
+import com.hello_doctor_api.dto.request.OtpRequest;
 import com.hello_doctor_api.dto.response.LoginResponse;
 import com.hello_doctor_api.dto.response.PatientResponse;
 import com.hello_doctor_api.entity.Patient;
@@ -15,9 +17,12 @@ import com.hello_doctor_api.filter.SecurityFilter;
 import com.hello_doctor_api.repository.PatientRepo;
 import com.hello_doctor_api.service.PatientService;
 import com.hello_doctor_api.utils.JwtUtil;
+import jakarta.mail.MessagingException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.mail.javamail.JavaMailSenderImpl;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -26,6 +31,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.util.Date;
 import java.util.Map;
 import java.util.Optional;
@@ -49,6 +55,8 @@ public class PatientServiceImpl implements PatientService {
     private AuthenticationManager authenticationManager;
     @Autowired
     private JwtUtil jwtUtil;
+    @Autowired
+    OtpConfig  otpConfig;
 
     @Override
     public ResponseEntity<PatientResponse> createPatient(CreatePatientRequest createPatientRequest, MultipartFile file) throws IOException {
@@ -67,9 +75,9 @@ public class PatientServiceImpl implements PatientService {
             patient.setFirstName(createPatientRequest.getFirstName());
             patient.setFatherName(createPatientRequest.getFatherName());
             patient.setLastName(createPatientRequest.getLastName());
-            patient.setAddress1(createPatientRequest.getAddress());
+            patient.setAddress1(createPatientRequest.getAddress1());
             patient.setAddress2(createPatientRequest.getAddress2());
-            patient.setLandMark(createPatientRequest.getLandmark());
+            patient.setLandMark(createPatientRequest.getLandMark());
             patient.setCity(createPatientRequest.getCity());
             patient.setState(createPatientRequest.getState());
             patient.setZip(createPatientRequest.getZip());
@@ -107,30 +115,40 @@ public class PatientServiceImpl implements PatientService {
 
 
     @Override
-    public LoginResponse Login(LoginRequest loginRequest) {
+    public String  initiateLogin(LoginRequest loginRequest) throws MessagingException, UnsupportedEncodingException {
 
         authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(
                         loginRequest.getEmail(),
                         loginRequest.getPassword()));
 
-        Patient patient = patientRepo.findByEmail(
-                loginRequest.getEmail()
-        ).orElseThrow(() -> new RuntimeException("Patient not found"));
-        System.out.println(patient);
-        String token = jwtUtil.generateToken(
-                loginRequest.getEmail(),
-                loginRequest.getPassword()
-        );
-        System.out.print("token"+ token);
-//       String email= loginRequest.getEmail();
-//       String password= loginRequest.getPassword();
-//   Optional < Patient> patient1= patientRepo.findByEmail(email);
-        LoginResponse lg = LoginResponse.builder()
+        // Check if the user exists
+        Patient patient = patientRepo.findByEmail(loginRequest.getEmail())
+                .orElseThrow(() -> new RuntimeException("Patient not found"));
+
+        // Generate & Send OTP
+        otpConfig.generateOtp(loginRequest.getEmail());
+
+        return "OTP has been sent to your email. Please verify to continue.";
+    }
+
+    @Override
+    public LoginResponse verifyOtp(OtpRequest otpRequest) {
+        JavaMailSender  javaMailSender = new JavaMailSenderImpl();
+        OtpConfig otpConfig = new OtpConfig();
+        boolean isValidOtp = otpConfig.validateOtp(otpRequest.email(), otpRequest.otp());
+        if (!isValidOtp) {
+            throw new RuntimeException("Invalid or expired OTP");
+        }
+        Patient patient = patientRepo.findByEmail(otpRequest.email())
+                .orElseThrow(() -> new RuntimeException("Patient not found"));
+        String token = jwtUtil.generateToken(otpRequest.email(), "");
+        return LoginResponse.builder()
                 .firstName(patient.getFirstName())
                 .LastName(patient.getLastName())
                 .token(token)
                 .build();
-        return lg;
     }
+
+
 }
