@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.hello_doctor_api.constants.PatientEnum;
 import com.hello_doctor_api.dto.request.CreatePatientRequest;
 import com.hello_doctor_api.dto.request.LoginRequest;
+import com.hello_doctor_api.dto.request.OtpRequest;
 import com.hello_doctor_api.dto.response.LoginResponse;
 import com.hello_doctor_api.dto.response.PatientResponse;
 import com.hello_doctor_api.entity.Patient;
@@ -68,5 +69,8 @@ public class PatientController {
     public ResponseEntity<String> initiateLogin(@RequestBody LoginRequest loginRequest) throws MessagingException, UnsupportedEncodingException {
         return new ResponseEntity<>(this.patientService.initiateLogin(loginRequest), HttpStatus.OK);
     }
-
+@PostMapping("/verify")
+ public ResponseEntity< LoginResponse> verifyOtp(@RequestBody OtpRequest otpRequest){
+        return new ResponseEntity<>(this.patientService.verifyOtp(otpRequest),HttpStatus.OK);
+}
 }

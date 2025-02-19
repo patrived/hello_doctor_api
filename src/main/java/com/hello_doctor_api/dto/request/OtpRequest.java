@@ -1,6 +1,8 @@
 package com.hello_doctor_api.dto.request;
 
 import jakarta.validation.constraints.*;
+import lombok.Data;
+
 
 public record OtpRequest(
         @NotNull(message = "Email cannot be null")

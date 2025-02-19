@@ -2,6 +2,7 @@ package com.hello_doctor_api.service.serviceImpl;
 
 import com.cloudinary.Cloudinary;
 import com.cloudinary.utils.ObjectUtils;
+
 import com.hello_doctor_api.config.OtpConfig;
 import com.hello_doctor_api.constants.PatientEnum;
 import com.hello_doctor_api.constants.Role;
@@ -28,6 +29,7 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.stereotype.Service;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
@@ -56,7 +58,7 @@ public class PatientServiceImpl implements PatientService {
     @Autowired
     private JwtUtil jwtUtil;
     @Autowired
-    OtpConfig  otpConfig;
+   private OtpConfig otpConfig;
 
     @Override
     public ResponseEntity<PatientResponse> createPatient(CreatePatientRequest createPatientRequest, MultipartFile file) throws IOException {
@@ -116,12 +118,10 @@ public class PatientServiceImpl implements PatientService {
 
     @Override
     public String  initiateLogin(LoginRequest loginRequest) throws MessagingException, UnsupportedEncodingException {
-
         authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(
                         loginRequest.getEmail(),
                         loginRequest.getPassword()));
-
         // Check if the user exists
         Patient patient = patientRepo.findByEmail(loginRequest.getEmail())
                 .orElseThrow(() -> new RuntimeException("Patient not found"));
@@ -133,22 +133,25 @@ public class PatientServiceImpl implements PatientService {
     }
 
     @Override
-    public LoginResponse verifyOtp(OtpRequest otpRequest) {
-        JavaMailSender  javaMailSender = new JavaMailSenderImpl();
-        OtpConfig otpConfig = new OtpConfig();
+    public LoginResponse verifyOtp( OtpRequest otpRequest) {
         boolean isValidOtp = otpConfig.validateOtp(otpRequest.email(), otpRequest.otp());
+
         if (!isValidOtp) {
             throw new RuntimeException("Invalid or expired OTP");
         }
+
         Patient patient = patientRepo.findByEmail(otpRequest.email())
                 .orElseThrow(() -> new RuntimeException("Patient not found"));
+
         String token = jwtUtil.generateToken(otpRequest.email(), "");
+
         return LoginResponse.builder()
                 .firstName(patient.getFirstName())
                 .LastName(patient.getLastName())
                 .token(token)
                 .build();
     }
+
 
 
 }
