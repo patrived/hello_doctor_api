@@ -4,12 +4,14 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.hello_doctor_api.constants.PatientEnum;
 import com.hello_doctor_api.dto.request.CreatePatientRequest;
 import com.hello_doctor_api.dto.request.LoginRequest;
+import com.hello_doctor_api.dto.request.OtpRequest;
 import com.hello_doctor_api.dto.response.LoginResponse;
 import com.hello_doctor_api.dto.response.PatientResponse;
 import com.hello_doctor_api.entity.Patient;
 import com.hello_doctor_api.exception.PatientCreationException;
 import com.hello_doctor_api.exception.ResourceNotFoundException;
 import com.hello_doctor_api.service.PatientService;
+import jakarta.mail.MessagingException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -18,6 +20,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 
 @RestController
 @RequestMapping("/api/v1/Patient")
@@ -63,8 +66,11 @@ public class PatientController {
 
 
 @PostMapping("/login")
-    public ResponseEntity<LoginResponse> Login(@RequestBody LoginRequest loginRequest) {
-        return new ResponseEntity<>(this.patientService.Login(loginRequest), HttpStatus.OK);
+    public ResponseEntity<String> initiateLogin(@RequestBody LoginRequest loginRequest) throws MessagingException, UnsupportedEncodingException {
+        return new ResponseEntity<>(this.patientService.initiateLogin(loginRequest), HttpStatus.OK);
     }
-
+@PostMapping("/verify")
+ public ResponseEntity< LoginResponse> verifyOtp(@RequestBody OtpRequest otpRequest){
+        return new ResponseEntity<>(this.patientService.verifyOtp(otpRequest),HttpStatus.OK);
+}
 }

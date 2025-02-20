@@ -11,9 +11,9 @@ public class CreatePatientRequest {
     private String firstName;
     private String fatherName;
     private String lastName;
-    private String address;
+    private String address1;
     private String address2;
-    private String landmark;
+    private String landMark;
     private String country;
     private String city;
     private String state;
