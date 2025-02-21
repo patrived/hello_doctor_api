@@ -7,6 +7,7 @@ import com.hello_doctor_api.dto.request.LoginRequest;
 import com.hello_doctor_api.dto.request.OtpRequest;
 import com.hello_doctor_api.dto.response.LoginResponse;
 import com.hello_doctor_api.dto.response.PatientResponse;
+import com.hello_doctor_api.dto.response.Verifyotp;
 import com.hello_doctor_api.entity.Patient;
 import com.hello_doctor_api.exception.PatientCreationException;
 import com.hello_doctor_api.exception.ResourceNotFoundException;
@@ -61,12 +62,13 @@ public class PatientController {
 
     @GetMapping("/byemail/{email}")
     public  Patient byEmail(@PathVariable String email){
-    return this.patientService.byEmail(email);
+
+        return this.patientService.byEmail(email);
     }
 
 
 @PostMapping("/login")
-    public ResponseEntity<String> initiateLogin(@RequestBody LoginRequest loginRequest) throws MessagingException, UnsupportedEncodingException {
+    public ResponseEntity<Verifyotp> initiateLogin(@RequestBody LoginRequest loginRequest) throws MessagingException, UnsupportedEncodingException {
         return new ResponseEntity<>(this.patientService.initiateLogin(loginRequest), HttpStatus.OK);
     }
 @PostMapping("/verify")

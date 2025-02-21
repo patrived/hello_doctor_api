@@ -11,6 +11,7 @@ import com.hello_doctor_api.dto.request.LoginRequest;
 import com.hello_doctor_api.dto.request.OtpRequest;
 import com.hello_doctor_api.dto.response.LoginResponse;
 import com.hello_doctor_api.dto.response.PatientResponse;
+import com.hello_doctor_api.dto.response.Verifyotp;
 import com.hello_doctor_api.entity.Patient;
 import com.hello_doctor_api.exception.FileEmptyException;
 import com.hello_doctor_api.exception.PatientCreationException;
@@ -117,11 +118,12 @@ public class PatientServiceImpl implements PatientService {
 
 
     @Override
-    public String  initiateLogin(LoginRequest loginRequest) throws MessagingException, UnsupportedEncodingException {
+    public Verifyotp initiateLogin(LoginRequest loginRequest) throws MessagingException, UnsupportedEncodingException {
         authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(
                         loginRequest.getEmail(),
                         loginRequest.getPassword()));
+
         // Check if the user exists
         Patient patient = patientRepo.findByEmail(loginRequest.getEmail())
                 .orElseThrow(() -> new RuntimeException("Patient not found"));
@@ -129,7 +131,11 @@ public class PatientServiceImpl implements PatientService {
         // Generate & Send OTP
         otpConfig.generateOtp(loginRequest.getEmail());
 
-        return "OTP has been sent to your email. Please verify to continue.";
+        // Return Verifyotp record
+        return Verifyotp.builder()
+                .message("OTP has been sent to your email. Please verify to continue.")
+                .email(patient.getEmail()) // Taking email from patient
+                .build();
     }
 
     @Override
