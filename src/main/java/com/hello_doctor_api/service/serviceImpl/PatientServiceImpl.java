@@ -11,7 +11,7 @@ import com.hello_doctor_api.dto.request.LoginRequest;
 import com.hello_doctor_api.dto.request.OtpRequest;
 import com.hello_doctor_api.dto.response.LoginResponse;
 import com.hello_doctor_api.dto.response.PatientResponse;
-import com.hello_doctor_api.dto.response.Verifyotp;
+import com.hello_doctor_api.dto.response.VerifyResponse;
 import com.hello_doctor_api.entity.Patient;
 import com.hello_doctor_api.exception.FileEmptyException;
 import com.hello_doctor_api.exception.PatientCreationException;
@@ -23,16 +23,12 @@ import jakarta.mail.MessagingException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.mail.javamail.JavaMailSender;
-import org.springframework.mail.javamail.JavaMailSenderImpl;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.stereotype.Service;
-import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.multipart.MultipartFile;
-
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.util.Date;
@@ -110,15 +106,24 @@ public class PatientServiceImpl implements PatientService {
         }
         return  new ResponseEntity<>(patientResponse, HttpStatus.CREATED);
     }
+
     @Override
-    public Patient byEmail(String email) {
+    public VerifyResponse getPatientbyEmail(String email) {
         Optional<Patient> patient = this.patientRepo.findByEmail(email);
-        return patient.orElse(null);
+
+        return patient.map(p -> VerifyResponse.builder()
+                        .message("Patient found")
+                        .email(p.getEmail())
+                        .build())
+                .orElse(VerifyResponse.builder()
+                        .message("Patient not found")
+                        .email(email)
+                        .build());
     }
 
 
     @Override
-    public Verifyotp initiateLogin(LoginRequest loginRequest) throws MessagingException, UnsupportedEncodingException {
+    public VerifyResponse initiateLogin(LoginRequest loginRequest) throws MessagingException, UnsupportedEncodingException {
         authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(
                         loginRequest.getEmail(),
@@ -132,7 +137,7 @@ public class PatientServiceImpl implements PatientService {
         otpConfig.generateOtp(loginRequest.getEmail());
 
         // Return Verifyotp record
-        return Verifyotp.builder()
+        return VerifyResponse.builder()
                 .message("OTP has been sent to your email. Please verify to continue.")
                 .email(patient.getEmail()) // Taking email from patient
                 .build();

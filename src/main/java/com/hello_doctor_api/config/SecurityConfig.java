@@ -65,7 +65,7 @@ public class SecurityConfig {
                 .requestMatchers("/api/v1/Patient/login").permitAll() // Permit all requests under "/demo/**"
                 .requestMatchers("/api/v1/Patient/verify").permitAll() // Permit all requests under "/demo/**"
                 .requestMatchers("/api/v1/Admin/specialization").permitAll() // Permit all requests under "/demo/**"
-                .requestMatchers("/api/v1/Patient/byemail/**").permitAll() // Permit all requests under "/demo/**"
+                .requestMatchers("/api/v1/Patient/byEmail/**").permitAll() // Permit all requests under "/demo/**"
 //              .requestMatchers("/demo/set").permitAll() // Example of another matcher (commented out)
                 .anyRequest().authenticated() // Authenticate all other requests
                 .and()

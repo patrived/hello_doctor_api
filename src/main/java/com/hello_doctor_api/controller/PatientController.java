@@ -7,8 +7,7 @@ import com.hello_doctor_api.dto.request.LoginRequest;
 import com.hello_doctor_api.dto.request.OtpRequest;
 import com.hello_doctor_api.dto.response.LoginResponse;
 import com.hello_doctor_api.dto.response.PatientResponse;
-import com.hello_doctor_api.dto.response.Verifyotp;
-import com.hello_doctor_api.entity.Patient;
+import com.hello_doctor_api.dto.response.VerifyResponse;
 import com.hello_doctor_api.exception.PatientCreationException;
 import com.hello_doctor_api.exception.ResourceNotFoundException;
 import com.hello_doctor_api.service.PatientService;
@@ -19,7 +18,6 @@ import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
-
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 
@@ -31,23 +29,21 @@ public class PatientController {
     private PatientService patientService;
 
 
-
-
     @PostMapping(value = "/registerPatient", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<ResponseEntity<PatientResponse>> createPatientRequest(
             @RequestPart("patient") String patientJson,
             @RequestPart("file") MultipartFile file) {
         System.out.println("patientJson is => " + patientJson);
-        System.out.println("file.getName() ---- "+ file.getOriginalFilename());
+        System.out.println("file.getName() ---- " + file.getOriginalFilename());
         System.out.println("ENTERED! ");
-        if(file.isEmpty()){
-            throw new ResourceNotFoundException(PatientEnum.PE004.getMessgae(),HttpStatus.FORBIDDEN);
+        if (file.isEmpty()) {
+            throw new ResourceNotFoundException(PatientEnum.PE004.getMessgae(), HttpStatus.FORBIDDEN);
         }
         try {
             ObjectMapper objectMapper = new ObjectMapper();
             System.out.println("OBJ");
             CreatePatientRequest createPatientRequest = objectMapper.readValue(patientJson, CreatePatientRequest.class);
-            System.out.println("DONE ___ = "+ createPatientRequest.toString());
+            System.out.println("DONE ___ = " + createPatientRequest.toString());
             ResponseEntity<PatientResponse> createdPatient = this.patientService.createPatient(createPatientRequest, file);
             if (createdPatient != null) {
                 return new ResponseEntity<>(createdPatient, HttpStatus.CREATED);
@@ -60,19 +56,20 @@ public class PatientController {
         }
     }
 
-    @GetMapping("/byemail/{email}")
-    public  Patient byEmail(@PathVariable String email){
-
-        return this.patientService.byEmail(email);
+    @GetMapping("/byEmail/{email}")
+    public ResponseEntity<VerifyResponse> getPatientbyEmail(@PathVariable String email) {
+        return ResponseEntity.ok(this.patientService.getPatientbyEmail(email));
     }
 
 
-@PostMapping("/login")
-    public ResponseEntity<Verifyotp> initiateLogin(@RequestBody LoginRequest loginRequest) throws MessagingException, UnsupportedEncodingException {
+    @PostMapping("/login")
+    public ResponseEntity<VerifyResponse> initiateLogin(@RequestBody LoginRequest loginRequest) throws MessagingException, UnsupportedEncodingException {
         return new ResponseEntity<>(this.patientService.initiateLogin(loginRequest), HttpStatus.OK);
     }
-@PostMapping("/verify")
- public ResponseEntity< LoginResponse> verifyOtp(@RequestBody OtpRequest otpRequest){
-        return new ResponseEntity<>(this.patientService.verifyOtp(otpRequest),HttpStatus.OK);
-}
+
+    @PostMapping("/verify")
+    public ResponseEntity<LoginResponse> verifyOtp(@RequestBody OtpRequest otpRequest) {
+        return new ResponseEntity<>(this.patientService.verifyOtp(otpRequest), HttpStatus.OK);
+    }
+
 }
